@@ -1,77 +1,75 @@
 import whisper
 import torch
 from datetime import timedelta
-import sys
 import time
+import logging
+import warnings
 
 
-def transcribe_audio_with_timings(audio_path):
-    try:
-        # Проверяем доступность GPU
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Используемое устройство: {device.upper()}")
 
-        # Загружаем модель (medium лучше для русского, но можно изменить)
-        model = whisper.load_model("large", device=device)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()]
+)
 
-        # Опции транскрибации
-        options = {
-            "language": "ru",  # Явно указываем русский язык
-            "word_timestamps": True,  # Тайминги для слов
-            "task": "transcribe",  # Только транскрибация (без перевода)
-            "fp16": False if device == "cpu" else True  # FP16 для GPU
-        }
 
-        print(f"Начинаю обработку файла: {audio_path}")
-        result = model.transcribe(audio_path, **options)
+class AudioTranscriber:
+    def __init__(self, model):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        try:
+            warnings.filterwarnings("ignore", message="Failed to launch Triton kernels.*")
+            # Проверяем доступность GPU
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.logger.info(f"Using device: {self.device.upper()}")
 
-        # Форматируем тайминги в читаемый вид
-        segments = []
-        for segment in result["segments"]:
-            start = str(timedelta(seconds=round(segment['start'])))
-            end = str(timedelta(seconds=round(segment['end'])))
-            segments.append({
-                "start": start,
-                "end": end,
-                "text": segment['text'].strip()
-            })
+            # Загружаем модель
+            self.model = whisper.load_model(model, device=self.device)
+            self.logger.info(f"Model loaded: {model}")
+        except Exception as e:
+            self.logger.error(f"AudioTranscriber setup failed with {e}")
 
-        return segments
+    def _transcribe(self, audio_path, language, word_timestamps):
+        self.logger.info("Starting transcription...")
+        try:
+            options = {
+                "language": language,  # Явно указываем русский язык
+                "word_timestamps": word_timestamps,  # Тайминги для слов
+                "task": "transcribe",  # Только транскрибация (без перевода)
+                "fp16": False if self.device == "cpu" else True  # FP16 для GPU
+            }
 
-    except Exception as e:
-        print(f"Ошибка при обработке аудио: {str(e)}", file=sys.stderr)
-        return None
+            self.logger.info(f"Working on: {audio_path}")
+            result = self.model.transcribe(audio_path, **options)
+
+            # Форматируем тайминги в читаемый вид
+            segments = []
+            for segment in result["segments"]:
+                start = str(timedelta(seconds=round(segment['start'])))
+                end = str(timedelta(seconds=round(segment['end'])))
+                segments.append({
+                    "start": start,
+                    "end": end,
+                    "text": segment['text'].strip()
+                })
+
+            return segments
+
+        except Exception as e:
+            self.logger.error(f"AudioTranscriber process failed with {e}")
+            return None
+
+    def process(self, audio_path, language, word_timestamps):
+        start_time = time.time()
+        transcription = self._transcribe(audio_path, language, word_timestamps)
+        process_time = time.time() - start_time
+        self.logger.info(f"Restoration completed in {process_time:.2f}s")
+        self.logger.debug(transcription)
+        return transcription
 
 
 if __name__ == "__main__":
-    audio_file = "audio/final_1747866130.wav"
-
-    # Проверка существования файла
-    try:
-        with open(audio_file, 'rb'):
-            pass
-    except FileNotFoundError:
-        print(f"Файл {audio_file} не найден!", file=sys.stderr)
-        sys.exit(1)
-
-    # Запуск транскрибации
-    start_time = time.time()
-    transcription = transcribe_audio_with_timings(audio_file)
-
-    process_time = time.time() - start_time
-    print(f"Restoration completed in {process_time:.2f}s")
-
-
-    if transcription:
-        print("\nРезультат транскрибации:")
-        for segment in transcription:
-            print(f"[{segment['start']} - {segment['end']}] {segment['text']}")
-
-        # Дополнительная статистика
-        total_duration = sum(
-            (float(timedelta.total_seconds(timedelta.strptime(s['end'], "%H:%M:%S")) -
-                   float(timedelta.total_seconds(timedelta.strptime(s['start'], "%H:%M:%S")))
-                   for s in transcription
-                   )))
-        print(f"\nОбщая длительность речи: {total_duration:.2f} секунд")
-        print(f"Количество сегментов: {len(transcription)}")
+    ts = AudioTranscriber("medium")
+    data = ts.process(audio_path="audio/input.wav", language="ru", word_timestamps=True)
+    print(data)
