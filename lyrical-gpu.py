@@ -19,7 +19,7 @@ class AudioTranscriber:
     def __init__(self, model):
         self.logger = logging.getLogger(self.__class__.__name__)
         try:
-            warnings.filterwarnings("ignore", message="Failed to launch Triton kernels.*")
+            #warnings.filterwarnings("ignore", message="Failed to launch Triton kernels.*")
             # Проверяем доступность GPU
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.logger.info(f"Using device: {self.device.upper()}")
@@ -32,33 +32,32 @@ class AudioTranscriber:
 
     def _transcribe(self, audio_path, language, word_timestamps):
         self.logger.info("Starting transcription...")
-        try:
-            options = {
-                "language": language,  # Явно указываем русский язык
-                "word_timestamps": word_timestamps,  # Тайминги для слов
-                "task": "transcribe",  # Только транскрибация (без перевода)
-                "fp16": False if self.device == "cpu" else True  # FP16 для GPU
-            }
 
-            self.logger.info(f"Working on: {audio_path}")
-            result = self.model.transcribe(audio_path, **options)
+        options = {
+            "language": language,  # Явно указываем русский язык
+            "word_timestamps": word_timestamps,  # Тайминги для слов
+            "task": "transcribe",  # Только транскрибация (без перевода)
+            "fp16": False if self.device == "cpu" else True  # FP16 для GPU
+        }
 
-            # Форматируем тайминги в читаемый вид
-            segments = []
-            for segment in result["segments"]:
-                start = str(timedelta(seconds=round(segment['start'])))
-                end = str(timedelta(seconds=round(segment['end'])))
-                segments.append({
-                    "start": start,
-                    "end": end,
-                    "text": segment['text'].strip()
-                })
+        self.logger.info(f"Working on: {audio_path}")
+        result = self.model.transcribe(audio_path, **options)
 
-            return segments
+        # Форматируем тайминги в читаемый вид
+        segments = []
+        for segment in result["segments"]:
+            start = str(timedelta(seconds=round(segment['start'])))
+            end = str(timedelta(seconds=round(segment['end'])))
+            segments.append({
+                "start": start,
+                "end": end,
+                "text": segment['text'].strip()
+            })
 
-        except Exception as e:
-            self.logger.error(f"AudioTranscriber process failed with {e}")
-            return None
+        return segments
+
+
+
 
     def process(self, audio_path, language, word_timestamps):
         start_time = time.time()
@@ -70,6 +69,6 @@ class AudioTranscriber:
 
 
 if __name__ == "__main__":
-    ts = AudioTranscriber("medium")
+    ts = AudioTranscriber("large-v2")
     data = ts.process(audio_path="audio/input.wav", language="ru", word_timestamps=True)
     print(data)
