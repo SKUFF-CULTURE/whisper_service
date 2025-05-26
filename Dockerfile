@@ -31,7 +31,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Копируем ваш скрипт
-COPY lyrical-gpu.py .
+COPY lyrical_gpu.py .
 COPY audio/ ./audio/
 
 # Указываем команду для запуска

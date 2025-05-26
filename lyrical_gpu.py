@@ -69,6 +69,6 @@ class AudioTranscriber:
 
 
 if __name__ == "__main__":
-    ts = AudioTranscriber("large-v2")
+    ts = AudioTranscriber("small")
     data = ts.process(audio_path="audio/input.wav", language="ru", word_timestamps=True)
     print(data)
