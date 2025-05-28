@@ -1,0 +1,52 @@
+# version: '3.8'  # Явно указываем версию
+
+# version: '3.8'
+
+services:
+
+  service_ollama:
+     image: ollama/ollama:latest
+     container_name: ollama
+     ports:
+       - "11434:11434"
+     volumes:
+       - ollama_data:/root/.ollama
+     healthcheck:
+       test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+       start_period: 30s
+     networks:
+       - kafka-network
+
+
+  service_recogniser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - NFS_MOUNT_POINT =/mnt/nfs_share/
+      - OLLAMA_API_URL=http://ollama:11434/api/generate
+      - OLLAMA_MODEL=mistral
+    networks:
+      - kafka-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+
+volumes:
+  ollama_data:
+
+networks:
+  kafka-network:
+    #external: true
+    driver: bridge
+
+

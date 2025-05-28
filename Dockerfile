@@ -1,12 +1,13 @@
 # Используем официальный образ NVIDIA с CUDA
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
+RUN sed -i 's|http://archive.ubuntu.com|http://mirror.yandex.ru/ubuntu|g' /etc/apt/sources.list
 # Устанавливаем зависимости
 # Устанавливаем Python 3.11 из стандартных репозиториев Ubuntu 22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     python3.11 \
     python3.11-dev \
     python3.11-venv \
@@ -31,8 +32,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Копируем ваш скрипт
-COPY lyrical_gpu.py .
-COPY audio/ ./audio/
+COPY . .
 
 # Указываем команду для запуска
-CMD ["python3", "lyrical-gpu.py"]
+CMD ["python3", "service.py"]
