@@ -4,7 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 from kafka_tools import KafkaMessageConsumer, KafkaMessageProducer
-from config import KAFKA_TOPICS, KAFKA_CONSUMER_GROUPS, ACTOR_GRACE_PERIOD, NFS_MOUNT_POINT
+from config import KAFKA_TOPICS, KAFKA_CONSUMER_GROUPS, ACTOR_GRACE_PERIOD, NFS_MOUNT_POINT, NFS_IP
 import pipeline
 import nfs_tools
 
@@ -76,6 +76,7 @@ def serve(key, value):
 
 if __name__ == "__main__":
     logger.info(f"{NAME} | ⏳ Sleeping for {ACTOR_GRACE_PERIOD} seconds...")
+    logger.info(f"NFS mount: {nfs_tools.mount_nfs_in_self(nfs_server_ip=NFS_IP, nfs_path=NFS_MOUNT_POINT, mount_point=NFS_MOUNT_POINT)}")
     time.sleep(ACTOR_GRACE_PERIOD)
     logger.info("Running external health-checks...")
     if not nfs_tools.check_nfs_server(NFS_MOUNT_POINT):
