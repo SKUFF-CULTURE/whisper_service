@@ -62,9 +62,9 @@ def serve(key, value):
         producer.send_message(key=key, value=message)
 
         pipeline_dir = os.path.dirname(final_path)
-        logger.info(f"🧻 As full pipeline is done, now cleaning nfs dir: {pipeline_dir}")
+        #logger.info(f"🧻 As full pipeline is done, now cleaning nfs dir: {pipeline_dir}")
 
-        nfs_tools.flush_nfs(pipeline_dir, NFS_MOUNT_POINT)
+        #nfs_tools.flush_nfs(pipeline_dir, NFS_MOUNT_POINT)
 
         logger.info(f"🚀 Work cycle on {pipeline_uuid} done!")
 
