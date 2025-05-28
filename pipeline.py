@@ -1,5 +1,5 @@
 from lyrical_gpu import AudioTranscriber
-from lyrical_pipeline import LlmCaller
+from ollama_pipeline import LlmCaller
 import logging
 
 logging.basicConfig(
@@ -17,23 +17,20 @@ def run(audio_path, language, model):
         transcriber = AudioTranscriber(model)
         llm = LlmCaller()
 
-        # Running
+        # Running whisper
 
         transcribed_data = transcriber.process(audio_path=audio_path, language=language, word_timestamps=True)
-        print(transcribed_data)
+        logging.info(transcribed_data)
         logging.info('Transcription done successfully!')
-        revenue = llm.process_llm(song_name="<Песня загруженная пользователем>",song_artist="<>",lyrics=transcribed_data)
-        print(revenue)
 
+        # Running LLM call
+        llm_decision = llm.process_llm(song_name="<Песня загруженная пользователем>", song_artist="<пользовательсктий автор>",lyrics=transcribed_data)
+        logging.info(f"Decision from Ollama: {llm_decision}")
 
-
-
-
-
-        return 0, transcribed_data
+        return 0, transcribed_data, llm_decision
     except Exception as e:
         logging.error(e)
-        return 1, None
+        return 1, None, None
 
 
 

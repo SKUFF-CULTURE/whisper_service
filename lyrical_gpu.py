@@ -19,7 +19,7 @@ class AudioTranscriber:
     def __init__(self, model):
         self.logger = logging.getLogger(self.__class__.__name__)
         try:
-            #warnings.filterwarnings("ignore", message="Failed to launch Triton kernels.*")
+            warnings.filterwarnings("ignore", message="Failed to launch Triton kernels.*")
             # Проверяем доступность GPU
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.logger.info(f"Using device: {self.device.upper()}")
@@ -69,6 +69,6 @@ class AudioTranscriber:
 
 
 if __name__ == "__main__":
-    ts = AudioTranscriber("small")
+    ts = AudioTranscriber("tiny")
     data = ts.process(audio_path="audio/input.wav", language="ru", word_timestamps=True)
     print(data)

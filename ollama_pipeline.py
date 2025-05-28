@@ -20,10 +20,11 @@ class LlmCaller:
         self.logger = logging.getLogger(self.__class__.__name__)
         try:
             load_dotenv()
-            self.llm = OllamaHandler(model=os.getenv('MODEL'))
+            self.llm = OllamaHandler(model=os.getenv('OLLAMA_MODEL', 'mistral'))
             self.logger.info(f'Successfully initialized {self.__class__.__name__}')
         except Exception as e:
             self.logger.error(f"Got an error in pipeline init: {e}")
+
     @staticmethod
     def _build_prompt(artist, song, lyrics):
         return premade_prompts.PROMPT_TEMPLATE_1.format(
@@ -47,7 +48,7 @@ class LlmCaller:
         except json.JSONDecodeError as e:
             raise ValueError(f"JSON parsing error: {e}")
 
-    def process_llm(self, song_name: str, song_artist: str, lyrics: list,):
+    def process_llm(self, song_name: str, song_artist: str, lyrics: list, ):
 
         # Отправляем Ollama данные на обработку
         self.logger.info(f'Requesting Ollama for {song_name} by {song_artist}')
@@ -68,6 +69,4 @@ class LlmCaller:
 
 if __name__ == '__main__':
     pl = LlmCaller()
-   #pl.process_llm('Дуло', 'MORGENSHTERN', LYRICS1)
-
-
+# pl.process_llm('Дуло', 'MORGENSHTERN', LYRICS1)
