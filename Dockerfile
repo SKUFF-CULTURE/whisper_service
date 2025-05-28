@@ -32,7 +32,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Копируем ваш скрипт
 COPY . .
-COPY audio/ ./audio/
 
 # Указываем команду для запуска
 CMD ["python3", "service.py"]
