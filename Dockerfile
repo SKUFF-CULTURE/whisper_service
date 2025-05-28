@@ -35,4 +35,4 @@ COPY . .
 COPY audio/ ./audio/
 
 # Указываем команду для запуска
-CMD ["python3", "pipeline.py"]
+CMD ["python3", "service.py"]
